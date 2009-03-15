@@ -1,17 +1,40 @@
 module RR
-  begin
-    class RestfulController < ApplicationController; end
-  rescue Exception => e
-    class RestfulController < ActionController::Base; end
-  end
+  module Controller
+    module InstanceMethods
+      def restful_resource
+        self.class.restful_resource
+      end
 
-  class RestfulController
-    cattr_accessor :resource
+      def check_access
+        head(403) unless restful_resource.access_rules.allow(self, action_name)
+      end
+    end
 
-    before_filter :check_access
+    module ClassMethods
+      def restful_resource
+        @restful_resource
+      end
 
-    def check_access
+      def restful_resource=(value)
+        @restful_resource = value
+      end
+    end
 
+    def self.included(base) #:nodoc:
+      base.class_eval do
+        include InstanceMethods
+        extend ClassMethods
+      end
+    end
+
+    begin
+      class RestfulController < ApplicationController; end
+    rescue Exception => e
+      class RestfulController < ActionController::Base; end
+    end
+
+    class RestfulController
+      before_filter :check_access
     end
   end
 end

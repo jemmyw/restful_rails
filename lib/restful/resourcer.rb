@@ -30,20 +30,19 @@ module RR
       @name = name
       @create_class = false
 
-      deny
       yield self
     end
 
     def access_rules
-      @access_rules ||= []
+      @access_rules ||= Restful::Access::RuleSet.new
     end
 
-    def allow
-      access_rules << :allow
+    def allow(*args, &block)
+      access_rules << Restful::Access::AccessRule.new(:allow, *args, &block)
     end
 
-    def deny
-      access_rules << :deny
+    def deny(*args, &block)
+      access_rules << Restful::Access::AccessRule.new(:deny, *args, &block)
     end
 
     def route(map)
@@ -62,16 +61,16 @@ module RR
       end
       
       if self.create_class
-        puts "Defining #{class_name}"
         eval %Q{
-          class ::#{class_name} < RR::RestfulController
+          class ::#{class_name} < RR::Controller::RestfulController
             resources_controller_for :#{name.to_s}
           end
         }
       end
           
       @controller_class = Kernel.const_get(class_name)
-      @controller_class.resource = self if @controller_class.respond_to?(:resource)
+      @controller_class.send(:include, RR::Controller)
+      @controller_class.restful_resource = self
 
       super
     end
