@@ -8,13 +8,8 @@ module Restful
         @options = options
         @block = block
 
-        if @block
-          puts "access rule init with block"
-        end
-
         create_string_array(:only)
         create_string_array(:except)
-
       end
 
       def create_string_array(sym)
@@ -25,11 +20,11 @@ module Restful
       # :except
 
       def matches(controller, action)
-        return unless @options[:only].include?(action.to_s) if @options[:only]
-        return if @options[:except].include?(action.to_s) if @options[:except]
+        return false unless @options[:only].include?(action.to_s) if @options[:only]
+        return false if @options[:except].include?(action.to_s) if @options[:except]
 
         if @block
-          @block.call(controller, action)
+          !!@block.call(controller, action)
         else
           true
         end
