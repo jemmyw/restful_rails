@@ -24,9 +24,12 @@ module RR
   class Resource
     include RR::Resourcer
     attr_reader :name
+    attr_accessor :create_class
 
     def initialize(name, &block)
       @name = name
+      @create_class = false
+
       deny
       yield self
     end
@@ -50,14 +53,25 @@ module RR
     end
 
     def define_controllers
-      eval %Q{
-        class ::#{name.to_s.classify.pluralize}Controller < RR::RestfulController
-          resources_controller_for :#{name}
-        end
-      }
+      class_name = "#{name.to_s.classify.pluralize}Controller"
 
-      @controller_class = Kernel.const_get("#{name.to_s.classify.pluralize}Controller")
-      @controller_class.resource = self
+      begin
+        Kernel.const_get(class_name)
+      rescue NameError => e
+        self.create_class = true
+      end
+      
+      if self.create_class
+        puts "Defining #{class_name}"
+        eval %Q{
+          class ::#{class_name} < RR::RestfulController
+            resources_controller_for :#{name.to_s}
+          end
+        }
+      end
+          
+      @controller_class = Kernel.const_get(class_name)
+      @controller_class.resource = self if @controller_class.respond_to?(:resource)
 
       super
     end

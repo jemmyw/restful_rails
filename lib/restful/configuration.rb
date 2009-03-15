@@ -12,6 +12,15 @@ class << ActionController::Routing::Routes;self;end.class_eval do
   end
 end
 
+module ActiveSupport::Dependencies
+  alias_method :clear_without_restful, :clear
+
+  def clear
+    clear_without_restful
+    RR::Configuration::Base.current.define_controllers
+  end
+end
+
 module RR
   module Configuration
     def config(*args)
