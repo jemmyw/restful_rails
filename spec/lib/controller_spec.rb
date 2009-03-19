@@ -48,14 +48,15 @@ describe RR::Controller::RestfulController do
         @resource_mock = mock(:restful_resource)
         @proc = Proc.new{}
         @callback = {:type => :after, :callback => :test, :proc => @proc}
+        @other_callback = {:type => :after, :callback => :not_test}
 
-        @resource_mock.should_receive(:callbacks).and_return([@callback])
+        @resource_mock.should_receive(:callbacks).and_return([@callback, @other_callback])
 
         @instance.should_receive(:restful_resource).and_return(@resource_mock)
       end
 
       it 'should call instance_exec with each matching callback' do
-        @instance.should_receive(:instance_exec).with(@format_proxy_mock, :test_arg)
+        @instance.should_receive(:instance_exec).once.with(@format_proxy_mock, :test_arg)
         @instance.callback(:after, :test, @format_mock, :test_arg) do
 
         end
@@ -77,6 +78,20 @@ describe RR::Controller::RestfulController do
           @block_called = true
         end
         @block_called.should == false
+      end
+    end
+
+    describe 'check_access' do
+      it 'should call head(403) if restful resource access rules deny access' do
+        @instance.should_receive(:restful_resource).and_return(mock(:resource, :access_rules => mock(:access_rules, :allow => false)))
+        @instance.should_receive(:head).with(403)
+        @instance.check_access
+      end
+
+      it 'should not do anything if restful resource access rules allow access' do
+        @instance.should_receive(:restful_resource).and_return(mock(:resource, :access_rules => mock(:access_rules, :allow => true)))
+        @instance.should_not_receive(:head).with(403)
+        @instance.check_access
       end
     end
   end
