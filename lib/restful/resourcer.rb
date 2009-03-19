@@ -99,10 +99,6 @@ module RR
         eval %Q{
           class ::#{class_name} < RR::Controller::RestfulController
             resources_controller_for :#{name.to_s}
-
-            def callback(*args, &block)
-              self.class.callback(*args, &block)
-            end
           end
         }
       end

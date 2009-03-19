@@ -1,8 +1,34 @@
+class Object
+  def instance_exec(*args, &block)
+    mname = "__instance_exec_#{Thread.current.object_id.abs}"
+    class << self; self end.class_eval{define_method(mname, &block)}
+    begin
+      ret = send(mname, *args)
+    ensure
+      class << self; self end.class_eval{undef_method(mname)} rescue nil
+    end
+    
+    ret
+  end
+end
+
 module RR
   module Controller
     module InstanceMethods
       def restful_resource
         self.class.restful_resource
+      end
+
+      def callback(type, name, format, *args, &block)
+        format_proxy = Restful::FormatProxy.new(format)
+
+        self.restful_resource.callbacks.select{|c| c[:type] == type && c[:callback] == name}.each do |callback|
+          instance_exec(format_proxy, *args, &callback[:proc])
+        end
+
+        unless format_proxy.called?
+          yield
+        end
       end
 
       def check_access
@@ -17,19 +43,6 @@ module RR
 
       def restful_resource=(value)
         @restful_resource = value
-      end
-
-      def callback(type, name, format, *args, &block)
-        format_proxy = Restful::FormatProxy.new(format)
-        
-        self.restful_resource.callbacks.select{|c| c[:type] == type && c[:callback] == name}.each do |callback|
-          puts 'found callback'
-          callback[:proc].call(format_proxy, *args)
-        end
-
-        unless format_proxy.called?
-          yield
-        end
       end
     end
 
