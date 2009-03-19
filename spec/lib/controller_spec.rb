@@ -16,3 +16,4 @@ describe Object do
     end
   end
 end
+

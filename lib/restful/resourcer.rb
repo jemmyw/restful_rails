@@ -35,6 +35,12 @@ module RR
       end
     end
 
+    def undefine_controllers
+      resources.each do |resource|
+        resource.undefine_controllers
+      end
+    end
+
     def define_controllers
       resources.each do |resource|
         resource.define_controllers
@@ -51,8 +57,6 @@ module RR
 
     def initialize(name, &block)
       @name = name
-      @create_class = false
-
       @callbacks = []
     end
 
@@ -86,24 +90,36 @@ module RR
       end
     end
 
-    def define_controllers
-      class_name = "#{name.to_s.classify.pluralize}Controller"
-
-      begin
-        Kernel.const_get(class_name)
-      rescue NameError => e
-        self.create_class = true
+    def undefine_controllers
+      if @controller_class && self.create_class
+        Object.send(:remove_const, @controller_class.name.to_sym)
       end
-      
+    end
+    
+    def class_name
+      @class_name = "#{name.to_s.classify.pluralize}Controller"
+    end
+
+    def create_class
+      @create_class ||= begin
+        Kernel.const_get(class_name)
+        false
+      rescue NameError => e
+        true
+      end
+    end
+
+    def define_controllers
       if self.create_class
         eval %Q{
-          class ::#{class_name} < RR::Controller::RestfulController
-            resources_controller_for :#{name.to_s}
-          end
+          class ::#{class_name} < RR::Controller::RestfulController; end
         }
+      else
+        
       end
           
       @controller_class = Kernel.const_get(class_name)
+      @controller_class.send(:resources_controller_for, name.to_sym)
       @controller_class.send(:include, RR::Controller)
       @controller_class.restful_resource = self
 

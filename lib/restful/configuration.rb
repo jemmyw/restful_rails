@@ -17,7 +17,7 @@ module ActiveSupport::Dependencies
 
   def clear
     clear_without_restful
-    RR::Configuration::Base.current.define_controllers
+    RR::Configuration::Base.current.reload
   end
 end
 
@@ -25,12 +25,11 @@ module RR
   module Configuration
     def config(*args)
       @configuration = RR::Configuration::Base.new(*args)
-      @configuration.enable
     end
 
     def route
       ActionController::Routing::Routes.draw_without_clearing do |map|
-        @configuration.route(map)
+        RR::Configuration::Base.current.route(map)
       end
     end
 
@@ -40,15 +39,30 @@ module RR
     class Base
       include ActionController::UrlWriter
       include Resourcer
+      
       cattr_accessor :current
 
-      def initialize(*args)
-        eval(args.first, binding)
+      def initialize(file)
+        self.class.current = self
+        @file = file
+        load
       end
 
-      def enable
-        self.class.current = self
+      def load
+        @resources = []
+        @changed = File.mtime(@file)
+        eval(File.read(@file), binding)
         define_controllers
+      end
+
+      def reload
+        if File.mtime(@file) > @changed
+          undefine_controllers
+          load
+          ActionController::Routing::Routes.reload!
+        else
+          define_controllers
+        end
       end
     end
   end
