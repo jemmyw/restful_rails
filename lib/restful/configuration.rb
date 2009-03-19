@@ -1,3 +1,4 @@
+# Redefine the routing draw method so that we can add our routes afterwards
 class << ActionController::Routing::Routes;self;end.class_eval do
   alias_method :draw_without_restful, :draw
 
@@ -6,12 +7,15 @@ class << ActionController::Routing::Routes;self;end.class_eval do
     RR::Configuration.route
   end
 
+  # Draw up some routes without clearing the old ones
   def draw_without_clearing(&block)
     yield ActionController::Routing::RouteSet::Mapper.new(self)
     install_helpers
   end
 end
 
+# We have to reload the dynamic controller classes when dependencies clear
+# or they stop working
 module ActiveSupport::Dependencies
   alias_method :clear_without_restful, :clear
 
