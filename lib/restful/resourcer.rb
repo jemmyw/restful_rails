@@ -5,14 +5,27 @@ module RR
     end
 
     def resource(*args, &block)
-      self.resources << RR::Resource.new(*args)
-      @current_resource = self.resources.last
-      @current_resource.configure(&block)
+      if @current_resource
+        @current_resource.resource(*args, &block)
+      else
+        self.resources << RR::Resource.new(*args)
+        @current_resource = self.resources.last
+        @current_resource.configure(&block)
+        @current_resource = nil
+      end
     end
 
-    def method_missing(symbol, *args)
+    def send_to_resource(symbol, *args, &block)
       if @current_resource
-        @current_resource.send(symbol, *args)
+        @current_resource.send_to_resource(symbol, *args, &block)
+      else
+        self.send(symbol, *args, &block)
+      end
+    end
+
+    def method_missing(symbol, *args, &block)
+      if @current_resource
+        @current_resource.send(:send_to_resource, symbol, *args, &block)
       end
     end
 
@@ -31,8 +44,10 @@ module RR
 
   class Resource
     include RR::Resourcer
+    
     attr_reader :name
     attr_accessor :create_class
+    attr_reader :callbacks
 
     def initialize(name, &block)
       @name = name
@@ -85,8 +100,8 @@ module RR
           class ::#{class_name} < RR::Controller::RestfulController
             resources_controller_for :#{name.to_s}
 
-            def callback(type, name, *args)
-              self.class.callback(type, name, *args)
+            def callback(*args, &block)
+              self.class.callback(*args, &block)
             end
           end
         }

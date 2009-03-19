@@ -38,6 +38,7 @@ module RR
     module_function :route
 
     class Base
+      include ActionController::UrlWriter
       include Resourcer
       cattr_accessor :current
 

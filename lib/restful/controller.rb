@@ -19,9 +19,16 @@ module RR
         @restful_resource = value
       end
 
-      def callback(type, name, *args)
-        @restful_resource.callbacks.select{|c| c.type == type && c.name == name }.each do |callback|
-          callback[:proc].call(*args)
+      def callback(type, name, format, *args, &block)
+        format_proxy = Restful::FormatProxy.new(format)
+        
+        self.restful_resource.callbacks.select{|c| c[:type] == type && c[:callback] == name}.each do |callback|
+          puts 'found callback'
+          callback[:proc].call(format_proxy, *args)
+        end
+
+        unless format_proxy.called?
+          yield
         end
       end
     end

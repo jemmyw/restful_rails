@@ -1,10 +1,12 @@
 module Ardes#:nodoc:
   module ResourcesController
-    # standard CRUD actions, with html, js and xml responses, re-written to mnake best use of resources_cotroller.
-    # This helps if you're writing controllers that you want to share via mixin or inheritance.
+    # standard CRUD actions, with html, js and xml responses, re-written to
+    # mnake best use of resources_cotroller. This helps if you're writing
+    # controllers that you want to share via mixin or inheritance.
     #
-    # This module is used as the actions for the controller by default, but you can change this behaviour:
-    #  
+    # This module is used as the actions for the controller by default, but you
+    # can change this behaviour:
+    #
     #   resources_controller_for :foos, :actions_include => false               # don't include any actions
     #   resources_controller_for :foos, :actions_include => Some::Other::Module # use this module instead
     #
@@ -29,12 +31,12 @@ module Ardes#:nodoc:
     # Instead of this:
     #   format.xml { render :xml => @post }
     #   format.xml { render :xml => @posts }
-    #   
+    #
     # do this:
     #   format.xml { render :xml => resource }
     #   format.xml { render :xml => resources }
     #
-    # === urls 
+    # === urls
     # Instead of this:
     #   redirect_to posts_url
     #   redirect_to new_post_url
@@ -44,8 +46,7 @@ module Ardes#:nodoc:
     #   redirect_to new_resource_url
     #
     module Actions
-      # GET /events
-      # GET /events.xml
+      # GET /events GET /events.xml
       def index
         self.resources = find_resources
 
@@ -57,8 +58,7 @@ module Ardes#:nodoc:
         end
       end
 
-      # GET /events/1
-      # GET /events/1.xml
+      # GET /events/1 GET /events/1.xml
       def show
         self.resource = find_resource
 
@@ -94,29 +94,31 @@ module Ardes#:nodoc:
         end
       end
 
-      # POST /events
-      # POST /events.xml
+      # POST /events POST /events.xml
       def create
         self.resource = new_resource
         
         respond_to do |format|
           if resource.save
-            format.html do
-              flash[:notice] = "#{resource_name.humanize} was successfully created."
-              after_create(true)
+            callback(:after, :create, format, self.resource, true) do
+              format.html do
+                flash[:notice] = "#{resource_name.humanize} was successfully created."
+                redirect_to resource_url
+              end
+              format.js
+              format.xml  { render :xml => resource, :status => :created, :location => resource_url }
             end
-            format.js
-            format.xml  { render :xml => resource, :status => :created, :location => resource_url }
           else
-            format.html { after_create(false) }
-            format.js   { render :text => false.to_json, :status => :unprocessable_entity }
-            format.xml  { render :xml => resource.errors, :status => :unprocessable_entity }
+            callback(:after, :create, format, self.resource, false) do
+              format.html { callback(:after, :create, self.resource, false) }
+              format.js   { render :text => false.to_json, :status => :unprocessable_entity }
+              format.xml  { render :xml => resource.errors, :status => :unprocessable_entity }
+            end
           end
         end
       end
 
-      # PUT /events/1
-      # PUT /events/1.xml
+      # PUT /events/1 PUT /events/1.xml
       def update
         self.resource = find_resource
         
@@ -136,8 +138,7 @@ module Ardes#:nodoc:
         end
       end
 
-      # DELETE /events/1
-      # DELETE /events/1.xml
+      # DELETE /events/1 DELETE /events/1.xml
       def destroy
         self.resource = find_resource
         resource.destroy
