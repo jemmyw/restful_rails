@@ -5,7 +5,15 @@ module RR
     end
 
     def resource(*args, &block)
-      self.resources << RR::Resource.new(*args, &block)
+      self.resources << RR::Resource.new(*args)
+      @current_resource = self.resources.last
+      @current_resource.configure(&block)
+    end
+
+    def method_missing(symbol, *args)
+      if @current_resource
+        @current_resource.send(symbol, *args)
+      end
     end
 
     def route(map)
@@ -30,7 +38,19 @@ module RR
       @name = name
       @create_class = false
 
+      @callbacks = []
+    end
+
+    def configure(&block)
       yield self
+    end
+
+    def after(callback, &block)
+      @callbacks << {:type => :after, :callback => callback, :proc => block}
+    end
+
+    def before(callback, &block)
+      @callbacks << {:type => :before, :callback => callback, :proc => block}
     end
 
     def access_rules
@@ -64,6 +84,10 @@ module RR
         eval %Q{
           class ::#{class_name} < RR::Controller::RestfulController
             resources_controller_for :#{name.to_s}
+
+            def callback(type, name, *args)
+              self.class.callback(type, name, *args)
+            end
           end
         }
       end

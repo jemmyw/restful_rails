@@ -18,6 +18,12 @@ module RR
       def restful_resource=(value)
         @restful_resource = value
       end
+
+      def callback(type, name, *args)
+        @restful_resource.callbacks.select{|c| c.type == type && c.name == name }.each do |callback|
+          callback[:proc].call(*args)
+        end
+      end
     end
 
     def self.included(base) #:nodoc:
