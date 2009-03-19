@@ -60,6 +60,7 @@ module RR
     end
 
     class RestfulController
+      include RR::Controller
       before_filter :check_access
     end
   end

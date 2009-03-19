@@ -114,13 +114,13 @@ module RR
         eval %Q{
           class ::#{class_name} < RR::Controller::RestfulController; end
         }
+        @controller_class = Kernel.const_get(class_name)
       else
-        
+        @controller_class = Kernel.const_get(class_name)
+        @controller_class.send(:include, RR::Controller)
       end
           
-      @controller_class = Kernel.const_get(class_name)
       @controller_class.send(:resources_controller_for, name.to_sym)
-      @controller_class.send(:include, RR::Controller)
       @controller_class.restful_resource = self
 
       super
