@@ -32,8 +32,10 @@ module RR
     end
 
     def route
-      ActionController::Routing::Routes.draw_without_clearing do |map|
-        RR::Configuration::Base.current.route(map)
+      if Base.current
+        ActionController::Routing::Routes.draw_without_clearing do |map|
+          Base.current.route(map)
+        end
       end
     end
 

@@ -55,8 +55,12 @@ module RR
     attr_accessor :create_class
     attr_reader :callbacks
 
-    def initialize(name, &block)
+    def initialize(name, options = {}, &block)
       @name = name
+      @options = options
+
+      @options[:enclosing] = [@options[:enclosing]].flatten.compact
+      
       @callbacks = []
     end
 
@@ -87,6 +91,14 @@ module RR
     def route(map)
       map.resources(self.name) do |inner_map|
         super(inner_map)
+      end
+
+      @options[:enclosing].each do |enclosing|
+        map.resources(enclosing) do |outer_map|
+          outer_map.resources(self.name) do |inner_map|
+            super(inner_map)
+          end
+        end
       end
     end
 
