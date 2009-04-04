@@ -9,7 +9,7 @@ http://github.com/jemmyw/restful_rails
 In a restful application most controllers look the same or very similar. This plugin extends the
 idea of resources_controller (http://blog.ardes.com/resources_controller) by removing the need to
 actually have any controller files. Instead you provide an extended routing file and the
-controllers are defined from there.
+controllers are defined from there. If you have an existing controller it will be extended.
 
 Example restful.rb file (placed in config):
 
