@@ -26,7 +26,7 @@ module RR
           instance_exec(format_proxy, *args, &callback[:proc])
         end
 
-        unless format_proxy.called?
+        if block_given? && !format_proxy.called?
           yield
         end
       end

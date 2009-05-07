@@ -1,3 +1,4 @@
+# This class is for testing if any format block has been called
 module Restful
   class FormatProxy
     attr_reader :called
@@ -7,16 +8,18 @@ module Restful
       @methods = []
       @called = false
 
-      @proxy.metaclass.class_eval do
-        alias_method :old_custom, :custom
+      if @proxy.respond_to?(:custom)
+        @proxy.metaclass.class_eval do
+          alias_method :old_custom, :custom
         
-        def custom(mime_type, &block)
-          old_custom(mime_type, &block)
-          old_block = @responses[mime_type]
+          def custom(mime_type, &block)
+            old_custom(mime_type, &block)
+            old_block = @responses[mime_type]
 
-          @responses[mime_type] = Proc.new do |*args|
-            @called = true
-            old_block.call(*args)
+            @responses[mime_type] = Proc.new do |*args|
+              @called = true
+              old_block.call(*args)
+            end
           end
         end
       end
