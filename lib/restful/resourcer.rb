@@ -127,9 +127,13 @@ module RR
           class ::#{class_name} < RR::Controller::RestfulController; end
         }
         @controller_class = Kernel.const_get(class_name)
+
+        @callbacks.each do |callback|
+          @controller_class.send(callback[:type], callback[:callback], &callback[:proc])
+        end
       else
         @controller_class = Kernel.const_get(class_name)
-        @controller_class.send(:include, RR::Controller)
+        @controller_class.send(:include, RR::Controller) unless @controller_class.included_modules.include? RR::Controller::InstanceMethods
       end
           
       @controller_class.send(:resources_controller_for, name.to_sym)
