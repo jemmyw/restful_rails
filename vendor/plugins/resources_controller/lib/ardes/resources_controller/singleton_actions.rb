@@ -11,12 +11,14 @@ module Ardes#:nodoc:
         self.resource = find_resource
         resource.destroy
         respond_to do |format|
-          format.html do
-            flash[:notice] = "#{resource_name.humanize} was successfully destroyed."
-            redirect_to enclosing_resource_url if enclosing_resource
+          callback(:after, :destroy, format, self.resource) do
+            format.html do
+              flash[:notice] = "#{resource_name.humanize} was successfully destroyed."
+              redirect_to enclosing_resource_url if enclosing_resource
+            end
+            format.js
+            format.xml  { head :ok }
           end
-          format.js
-          format.xml  { head :ok }
         end
       end
     end

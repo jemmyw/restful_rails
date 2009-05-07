@@ -110,7 +110,7 @@ module Ardes#:nodoc:
             end
           else
             callback(:after, :create, format, self.resource, false) do
-              format.html { callback(:after, :create, self.resource, false) }
+              format.html { }
               format.js   { render :text => false.to_json, :status => :unprocessable_entity }
               format.xml  { render :xml => resource.errors, :status => :unprocessable_entity }
             end
@@ -140,15 +140,18 @@ module Ardes#:nodoc:
 
       # DELETE /events/1 DELETE /events/1.xml
       def destroy
+        debugger
         self.resource = find_resource
         resource.destroy
+
         respond_to do |format|
-          format.html do
-            flash[:notice] = "#{resource_name.humanize} was successfully destroyed."
-            after_destroy(true)
+          callback(:after, :destroy, format, self.resource) do
+            format.html do
+              flash[:notice] = "#{resource_name.humanize} was successfully destroyed."
+            end
+            format.js
+            format.xml  { head :ok }
           end
-          format.js
-          format.xml  { head :ok }
         end
       end
     end

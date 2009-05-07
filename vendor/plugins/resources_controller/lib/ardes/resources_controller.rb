@@ -449,6 +449,7 @@ module Ardes#:nodoc:
         extend  ResourcesController::ClassMethods
         helper  ResourcesController::Helper
         include ResourcesController::InstanceMethods, ResourcesController::NamedRouteHelper
+        include RR::RestfulCallbacks
       end
 
       before_filter(:load_enclosing_resources, when_options) unless load_enclosing_resources_filter_exists?
