@@ -24,7 +24,7 @@ module Restful
         return false if @options[:except].include?(action.to_s) if @options[:except]
 
         if @block
-          !!@block.call(controller, action)
+          !!controller.send(:instance_eval, &@block)
         else
           true
         end
